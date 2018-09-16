@@ -7,64 +7,78 @@ const toCents = (number = 0) =>
     .round(2)
     .times(100)
     .toFixed(0);
+
 const sum = totals =>
   totals.reduce((p, v) => p.add(new BigNumber(v)), new BigNumber(0)).toFixed(2);
-const difference = (credit, debit) =>
-  Math.abs(new BigNumber(credit).sub(new BigNumber(debit)).toFixed(2));
 
-const format = bsb => {
-  const value = bsb.replace(/(\s|-)+/, '').trim();
-  return value ? `${value.slice(0, 3)}-${value.slice(3, 6)}` : '';
+const hash = accounts => {
+  const hashBase = accounts.map(a => a.substr(2, 11));
+
+  if (hashBase.length > 1) {
+    const result = hashBase.reduce((previousValue, currentItem) => {
+      let saveBit = 0;
+      const semiHash = [];
+      for (let b = 10; b >= 0; b -= 1) {
+        const digit1 = parseInt(previousValue[b], 10);
+        const digit2 = parseInt(currentItem[b], 10);
+
+        const s = digit1 + digit2 + saveBit;
+        let add = 0;
+        if (s >= 10) {
+          saveBit = 1;
+          add = s - 10;
+        } else {
+          saveBit = 0;
+          add = s;
+        }
+        semiHash[b] = add;
+      }
+
+      return semiHash;
+    });
+
+    return result.join('');
+  }
+
+  return hashBase;
 };
 
-const PAYMENT_FORMAT = [
-  '1',
-  '%(bsb)7s',
-  '%(account)9s',
-  '%(tax)1s',
-  '%(transactionCode)02d',
-  '%(amount)010d',
-  '%(accountTitle)-32s',
-  '%(reference)-18s',
-  '%(traceBsb)7s',
-  '%(traceAccount)9s',
-  '%(remitter)-16s',
-  '%(taxAmount)08d',
+const HEADER_FORMAT = [
+  '1,',
+  ',',
+  ',',
+  ',',
+  '%(account).16s,',
+  '7,',
+  '%(date)02d,',
+  '%(date)02d,',
 ].join('');
 
-// NOTE: Assuming the account in header is blank filled and right justified
-// like the detail record, even though the spec from ANZ didn't specify it.
-const HEADER_FORMAT = [
-  '0',
-  '%(bsb)7s',
-  '%(account)9s',
-  ' ',
-  '01',
-  '%(bank)-3s',
-  ' '.repeat(7),
-  '%(user)-26s',
-  '%(userNumber)06d',
-  '%(description)-12s',
-  '%(date)6s',
-  '%(time)4s',
-  ' '.repeat(36),
+const PAYMENT_FORMAT = [
+  '2,',
+  '%(account).16s,',
+  '%(transactionCode)02d,',
+  '%(amount)d,',
+  '%(accountTitle).20s,',
+  '%(reference).12s,',
+  '%(traceAccount).12s,',
+  '',
+  '%(particulars).12s,',
+  '%(remitter).12s,',
+  '', // Your Code Optional
+  '', // Your Reference Optional
 ].join('');
 
 const FOOTER_FORMAT = [
-  '7',
-  '999-999',
-  ' '.repeat(12),
-  '%(net)010d',
-  '%(credit)010d',
-  '%(debit)010d',
-  ' '.repeat(24),
-  '%(length)06d',
-  ' '.repeat(40),
+  '3,', // Control record
+  '%(credit)d,',
+  '%(length)d,',
+  '%(hash)011d',
 ].join('');
 
-class ABA {
+class IB4B {
   constructor(opts) {
-    this.options = Object.assign({}, ABA.defaults, opts);
+    this.options = Object.assign({}, IB4B.defaults, opts);
   }
 
   transaction(transaction) {
@@ -72,10 +86,13 @@ class ABA {
       PAYMENT_FORMAT,
       Object.assign({}, transaction, {
         amount: toCents(transaction.amount),
-        bsb: format(transaction.bsb),
         account: transaction.account.trim(),
-        traceBsb: format(transaction.traceBsb),
-        taxAmount: toCents(transaction.taxAmount),
+        accountTitle: transaction.accountTitle.trim(),
+        traceAccount: transaction.traceAccount ? transaction.traceAccount : '',
+        reference: transaction.reference,
+        remitter: transaction.remitter,
+        transactionCode: IB4B.CREDIT,
+        particulars: '',
       })
     );
   }
@@ -86,12 +103,11 @@ class ABA {
 
   getHeader() {
     const header = this.options;
-    const time = moment(header.time || header.date || new Date());
+    const time = moment(header.date || new Date());
 
     return Object.assign({}, header, {
-      date: time.format('DDMMYY'),
-      bsb: format(header.bsb),
-      time: header.time ? time.format('HHmm') : '',
+      date: time.format('YYMMDD'),
+      account: header.account.trim(),
     });
   }
 
@@ -100,48 +116,45 @@ class ABA {
   }
 
   getFooter(transactions) {
-    const credits = transactions.filter(p => p.transactionCode === ABA.CREDIT);
-    const debits = transactions.filter(p => p.transactionCode === ABA.DEBIT);
+    const credits = transactions.filter(p => p.transactionCode === IB4B.CREDIT);
     const credit = sum(credits.map(c => c.amount));
-    const debit = sum(debits.map(d => d.amount));
+    const accounts = transactions.map(p => p.account);
+    const hashTotal = hash(accounts);
 
     return {
-      // According to spec the net total was supposed to be an unsigned value of
-      // credit minus debit (with no mention of underflow), but turns out they
-      // really meant merely the difference between credit and debit.
-      net: toCents(difference(credit, debit)),
       credit: toCents(credit),
-      debit: toCents(debit),
       length: transactions.length,
+      hash: hashTotal,
     };
   }
 
   generate(transactions = []) {
-    // ABA requires at least one detail record.
+    // IB4B requires at least one detail record.
     if (!transactions.length) {
       throw new Error('Please pass in at least one payment');
     }
     const formatted = transactions.map(payment =>
-      this.transaction(Object.assign({}, ABA.PAYMENT_DEFAULTS, payment))
+      this.transaction(Object.assign({}, IB4B.PAYMENT_DEFAULTS, payment))
     );
     const footer = this.formatFooter(transactions);
     return [this.formatHeader(), ...formatted, footer].join('\r\n');
   }
 }
 
-ABA.PAYMENT_DEFAULTS = {
+IB4B.PAYMENT_DEFAULTS = {
   tax: '',
   taxAmount: 0,
 };
 
-ABA.CREDIT = 50;
-ABA.DEBIT = 13;
+IB4B.CREDIT = 50;
+IB4B.DEBIT = 13;
 
-ABA.defaults = {
+IB4B.defaults = {
   bsb: '',
   account: '',
   description: '',
   time: '',
+  remitter: '',
 };
 
-module.exports = ABA;
+module.exports = IB4B;
