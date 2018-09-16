@@ -1,42 +1,35 @@
-const ABA = require('../index');
+const IB4B = require('../index');
 
-describe('ABA', () => {
+describe('IB4B', () => {
   it('works', () => {
-    const aba = new ABA();
+    const aba = new IB4B();
     expect(aba).not.toBe(null);
   });
 
   it('throws error', () => {
-    const aba = new ABA();
+    const aba = new IB4B();
     expect(() => aba.generate([])).toThrowError();
   });
 
   it('generates', () => {
-    const aba = new ABA({
-      bsb: '012-030',
-      account: '111111111',
-      bank: 'ANZ',
-      user: 'A USERNAME',
-      userNumber: 1234,
-      description: 'Creditors',
+    const ib4b = new IB4B({
+      account: '0201000123456000',
     });
 
     const transaction = {
-      bsb: '061021',
-      tax: 10,
-      transactionCode: ABA.DEBIT,
-      account: '123456',
-      amount: '12.00',
-      accountTitle: 'test',
-      reference: '1234',
-      traceBsb: '061123',
-      traceAccount: '1234567',
-      remitter: '1235',
-      taxAmount: 12,
+      transactionCode: IB4B.CREDIT,
+      account: '0200123456789000',
+      amount: '12.50',
+      accountTitle: 'The Electrician Corp',
+      reference: 'AZ100364C',
+      remitter: 'ACME CORPORATION',
     };
-    const file = aba.generate([transaction]);
+
+    const file = ib4b.generate([transaction]);
     expect(file).not.toBe(undefined);
     const lines = file.split('\r\n');
-    expect(lines[1].slice(0, 3)).toBe('106');
+    expect(lines[1]).toBe(
+      '2,0200123456789000,50,1250,The Electrician Corp,AZ100364C,,,ACME CORPORATION,'
+    );
   });
 });
