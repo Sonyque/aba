@@ -1,10 +1,12 @@
 {
-  "name": "aba-generate",
-  "version": "1.0.3",
-  "description": "ABA file generation",
+  "name": "afi-generate",
+  "version": "1.0.0",
+  "description": "IB4B afi/txt file generation",
   "main": "index.js",
-  "repository": "git@github.com:ordermentum/aba.git",
-  "author": "engineering@ordermentum.com",
+  "repository": "https://github.com/Sonyque/ib4b.git",
+  "author": "sonyquekss@gmail.com",
+  "homepage": "https://github.com/Sonyque/ib4b#ib4b-afitxt-file-generation-nodejs",
+  "keywords": ["IB4B", "afi", "afi/txt", "transaction files", "direct credit files"],
   "license": "Apache-2",
   "devDependencies": {
     "babel-eslint": "^8.0.2",
