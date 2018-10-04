@@ -65,8 +65,8 @@ const PAYMENT_FORMAT = [
   '',
   '%(particulars).12s,',
   '%(remitter).12s,',
-  '', // Your Code Optional
-  '', // Your Reference Optional
+  ',', // Your Code Optional
+  ',', // Your Reference Optional
 ].join('');
 
 const FOOTER_FORMAT = [
