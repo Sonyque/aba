@@ -62,7 +62,7 @@ const PAYMENT_FORMAT = [
   '%(accountTitle).20s,',
   '%(reference).12s,',
   '%(traceAccount).12s,',
-  '',
+  ',',
   '%(particulars).12s,',
   '%(remitter).12s,',
   ',', // Your Code Optional
@@ -87,9 +87,11 @@ class IB4B {
       Object.assign({}, transaction, {
         amount: toCents(transaction.amount),
         account: transaction.account.trim(),
-        accountTitle: transaction.accountTitle.trim(),
-        traceAccount: transaction.traceAccount ? transaction.traceAccount : '',
-        reference: transaction.reference,
+        accountTitle: transaction.accountTitle.trim().substring(0, 20),
+        traceAccount: transaction.traceAccount
+          ? transaction.traceAccount.trim().substring(0, 12)
+          : '',
+        reference: transaction.reference.trim().substring(0, 12),
         remitter: transaction.remitter,
         transactionCode: IB4B.CREDIT,
         particulars: '',
