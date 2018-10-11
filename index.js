@@ -64,8 +64,8 @@ const PAYMENT_FORMAT = [
 
 const FOOTER_FORMAT = [
   '3,', // Control record
-  '%(credit)d,',
-  '%(length)d,',
+  '%(credit)012d,',
+  '%(length)06d,',
   '%(hash)011d',
 ].join('');
 
