@@ -12,32 +12,25 @@ const sum = totals =>
   totals.reduce((p, v) => p.add(new BigNumber(v)), new BigNumber(0)).toFixed(2);
 
 const hash = accounts => {
-  const hashBase = accounts.map(a => a.substr(2, 11));
+  const hashBase = accounts.map(a => {
+    const newA = a.substr(2, 11);
+    if (newA.length < 11) {
+      return newA.padStart(11, '0');
+    }
+    return newA;
+  });
 
   if (hashBase.length > 1) {
-    const result = hashBase.reduce((previousValue, currentItem) => {
-      let saveBit = 0;
-      const semiHash = [];
-      for (let b = 10; b >= 0; b -= 1) {
-        const digit1 = parseInt(previousValue[b], 10);
-        const digit2 = parseInt(currentItem[b], 10);
+    const result = hashBase
+      .reduce(
+        (accumulator, currentItem) => accumulator + parseInt(currentItem, 10),
+        0
+      )
+      .toString();
 
-        const s = digit1 + digit2 + saveBit;
-        let add = 0;
-        if (s >= 10) {
-          saveBit = 1;
-          add = s - 10;
-        } else {
-          saveBit = 0;
-          add = s;
-        }
-        semiHash[b] = add;
-      }
-
-      return semiHash;
-    });
-
-    return result.join('');
+    if (result.length > 11) return result.substr(result.length - 11);
+    else if (result.length < 11) return result.padStart(11, '0');
+    return result;
   }
 
   return hashBase;
