@@ -70,10 +70,10 @@ describe('IB4B', () => {
       });
 
       let footer = '3,'; // Control record
-      footer += '401226,'; // Transaction Amount Total = 4012,26
-      footer += '3,'; // Transaction Record Count
+      footer += '000000401226,'; // Transaction Amount Total = 4012,26
+      footer += '000003,'; // Transaction Record Count
       footer += '00370370367'; // Hash Total. Last row without comma
-      expect(footer.length).toBe(22);
+      expect(footer.length).toBe(33);
 
       const payments = [PAYMENT, PAYMENT, PAYMENT];
       const rows = ib4b.generate(payments).split(/\r\n/);
@@ -134,7 +134,7 @@ describe('IB4B', () => {
 
       const footer = '185006'; // Sum of credits should be 1850.06
       const rows = ib4b.generate(payments).split(/\r\n/);
-      expect(rows[3].substr(2, 6)).toBe(footer);
+      expect(rows[3].substr(8, 6)).toBe(footer);
     });
   });
 });
