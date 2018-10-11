@@ -45,8 +45,11 @@ describe('IB4B', () => {
       row += 'Order 132,'; // Other Party Reference. Optional field.
       row += ','; // Other Party Code. Optional field.
       row += ','; // Spare. Currently an unused field, leave blank.
+      row += ','; // Other Party Particulars. Optional field.
       row += 'Vault,'; // Remitter. Your company’s name.
-      expect(row.length).toBe(61);
+      row += ','; // Your Code. Optional field.
+      row += ','; // Your Reference. Optional field.
+      expect(row.length).toBe(64);
 
       const payment = {
         transactionCode: IB4B.CREDIT,
