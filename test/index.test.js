@@ -29,7 +29,7 @@ describe('IB4B', () => {
     expect(file).not.toBe(undefined);
     const lines = file.split('\r\n');
     expect(lines[1]).toBe(
-      '2,0200123456789000,50,1250,The Electrician Corp,AZ100364C,,,ACME CORPORATION,'
+      '2,0200123456789000,50,1250,The Electrician Corp,AZ100364C,,,,ACME CORPORATION,,,'
     );
   });
 });
