@@ -36,6 +36,7 @@
   },
   "scripts": {
     "precommit": "lint-staged",
+    "test": "eslint . && jest --forceExit",
     "flow": "flow check",
     "start": "./bin/app",
     "lint": "eslint .",
