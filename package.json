@@ -1,6 +1,6 @@
 {
   "name": "afi-generate",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "IB4B afi/txt file generation",
   "main": "index.js",
   "repository": "https://github.com/Sonyque/ib4b.git",
